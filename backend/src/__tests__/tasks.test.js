@@ -1,17 +1,13 @@
 const request = require("supertest");
 const express = require("express");
-const taskRoutes = require("../routes/tasks");
-
-// Import tasks array directly
-const { tasks } = require("../routes/tasks");
+const { router, tasks } = require("../routes/tasks"); // Import both separately
 
 const app = express();
 app.use(express.json());
-app.use("/api/tasks", taskRoutes);
+app.use("/api/tasks", router); // Use the router only
 
 describe("Task API", () => {
   beforeEach(() => {
-    // Reset tasks array before each test
     tasks.length = 0;
   });
 

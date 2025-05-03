@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 // In-memory store (stateless)
-let tasks = [];
+const tasks = []; // Use const and mutate with push/splice etc.
 
 // Get all tasks
 router.get("/", (req, res) => {
@@ -32,8 +32,13 @@ router.put("/:id", (req, res) => {
 
 // Delete a task
 router.delete("/:id", (req, res) => {
-  tasks = tasks.filter((t) => t.id !== parseInt(req.params.id));
+  const index = tasks.findIndex((t) => t.id === parseInt(req.params.id));
+  if (index === -1) return res.status(404).json({ error: "Task not found" });
+  tasks.splice(index, 1);
   res.status(204).send();
 });
 
-module.exports = { router, tasks };
+module.exports = {
+  tasks, // for testing
+  router, // for app
+};
