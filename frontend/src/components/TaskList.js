@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const TaskList = () => {
@@ -8,18 +8,18 @@ const TaskList = () => {
   const API_URL =
     process.env.REACT_APP_API_URL || "http://backend:5000/api/tasks";
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const response = await axios.get(API_URL);
       setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
-  };
+  }, [API_URL]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const addTask = async (e) => {
     e.preventDefault();
