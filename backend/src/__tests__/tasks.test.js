@@ -2,6 +2,9 @@ const request = require("supertest");
 const express = require("express");
 const taskRoutes = require("../routes/tasks");
 
+// Import tasks array directly
+const { tasks } = require("../routes/tasks");
+
 const app = express();
 app.use(express.json());
 app.use("/api/tasks", taskRoutes);
@@ -9,7 +12,7 @@ app.use("/api/tasks", taskRoutes);
 describe("Task API", () => {
   beforeEach(() => {
     // Reset tasks array before each test
-    taskRoutes.tasks = [];
+    tasks.length = 0;
   });
 
   test("should create a new task", async () => {
