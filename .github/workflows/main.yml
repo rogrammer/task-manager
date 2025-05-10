@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: backend/node_modules
-          key: ${{ runner.os }}-backend-${{ hashFiles('server/package-lock.json') }}
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-backend-
 
@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/node_modules
-          key: ${{ runner.os }}-frontend-${{ hashFiles('client/package-lock.json') }}
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-frontend-
 
