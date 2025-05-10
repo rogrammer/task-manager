@@ -1,0 +1,23 @@
+{
+    "family": "backend",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+      {
+        "name": "backend-container",
+        "image": "337243655619.dkr.ecr.eu-north-1.amazonaws.com/backend",
+        "essential": true,
+        "portMappings": [
+          {
+            "containerPort": 5000,
+            "hostPort": 5000,
+            "protocol": "tcp"
+          }
+        ],
+        "memory": 512,
+        "cpu": 256
+      }
+    ],
+    "requiresCompatibilities": ["EC2"],
+    "memory": "512",
+    "cpu": "256"
+  }
