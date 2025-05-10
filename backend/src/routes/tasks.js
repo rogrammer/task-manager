@@ -38,7 +38,6 @@ router.delete("/:id", (req, res) => {
   res.status(204).send();
 });
 
-module.exports = {
-  tasks, // for testing
-  router, // for app
-};
+module.exports = router; // Export only the router for Express
+// Optionally export tasks for testing
+module.exports.tasks = tasks; // Accessible as require('./routes/tasks').tasks
