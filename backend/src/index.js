@@ -15,6 +15,7 @@ const corsOptions = {
     "http://localhost:3001",
     "http://frontend:3000",
     "http://16.16.162.182:3000",
+    "http://13.49.226.236:3000",
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
