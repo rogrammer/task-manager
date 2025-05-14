@@ -1,0 +1,43 @@
+{
+  "family": "task-manager-app",
+  "networkMode": "bridge",
+  "requiresCompatibilities": ["EC2"],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "backend-container",
+      "image": "337243655619.dkr.ecr.eu-north-1.amazonaws.com/backend",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "memory": 256,
+      "cpu": 128
+    },
+    {
+      "name": "frontend-container",
+      "image": "337243655619.dkr.ecr.eu-north-1.amazonaws.com/frontend",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "REACT_APP_API_URL",
+          "value": "http://localhost:5000"
+        }
+      ],
+      "memory": 256,
+      "cpu": 128
+    }
+  ]
+}

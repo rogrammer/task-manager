@@ -6,8 +6,7 @@ const TaskList = () => {
   const [newTask, setNewTask] = useState("");
 
   const API_URL =
-    process.env.REACT_APP_API_URL ||
-    "http://backend-service.manager:5000/api/tasks";
+    process.env.REACT_APP_API_URL || "http://backend:5000/api/tasks";
 
   const fetchTasks = useCallback(async () => {
     try {

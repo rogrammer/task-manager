@@ -10,10 +10,8 @@ env:
   ECR_REPOSITORY_FRONTEND: frontend
   ECR_REPOSITORY_BACKEND: backend
   ECS_CLUSTER: task-cluster
-  ECS_SERVICE_FRONTEND: frontend-service
-  ECS_SERVICE_BACKEND: backend-service
-  ECS_TASK_DEFINITION_FRONTEND: ecs-task-definition-frontend.json
-  ECS_TASK_DEFINITION_BACKEND: ecs-task-definition-backend.json
+  ECS_SERVICE: task-manager-service
+  ECS_TASK_DEFINITION: ecs-task-definition.json
   CONTAINER_NAME_FRONTEND: frontend-container
   CONTAINER_NAME_BACKEND: backend-container
 
@@ -21,11 +19,9 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Configure AWS credentials (using IAM credentials per your logs)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -33,13 +29,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Build, tag, and push frontend image
-      - name: Build, tag, and push frontend image
+      # Build & push frontend
+      - name: Build & push frontend image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -50,8 +45,8 @@ jobs:
           docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:$IMAGE_TAG $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:latest
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:latest
 
-      # Build, tag, and push backend image
-      - name: Build, tag, and push backend image
+      # Build & push backend
+      - name: Build & push backend image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -62,50 +57,29 @@ jobs:
           docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:$IMAGE_TAG $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:latest
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:latest
 
-      # Render frontend task definition
-      - name: Render frontend task definition
-        id: render-frontend-task
+      # Render task definition (combined)
+      - name: Render ECS task definition
+        id: render-task
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_FRONTEND }}
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
           container-name: ${{ env.CONTAINER_NAME_FRONTEND }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}:${{ github.sha }}
 
-      # Register frontend task definition
-      - name: Register frontend task definition
+      - name: Replace backend container image
         run: |
-          aws ecs register-task-definition --cli-input-json file://${{ steps.render-frontend-task.outputs.task-definition }} --region ${{ env.AWS_REGION }}
+          sed -i "s|\"image\": \".*backend.*\"|\"image\": \"${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}\"|" ${{ steps.render-task.outputs.task-definition }}
 
-      # Render backend task definition
-      - name: Render backend task definition
-        id: render-backend-task
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_BACKEND }}
-          container-name: ${{ env.CONTAINER_NAME_BACKEND }}
-          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}
-
-      # Register backend task definition
-      - name: Register backend task definition
+      # Register updated task definition
+      - name: Register task definition
         run: |
-          aws ecs register-task-definition --cli-input-json file://${{ steps.render-backend-task.outputs.task-definition }} --region ${{ env.AWS_REGION }}
+          aws ecs register-task-definition --cli-input-json file://${{ steps.render-task.outputs.task-definition }} --region ${{ env.AWS_REGION }}
 
-      # Deploy frontend (skip if service doesn't exist)
-      - name: Deploy frontend to ECS
-        continue-on-error: true
+      # Deploy new task definition
+      - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.render-frontend-task.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE_FRONTEND }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-      # Deploy backend (skip if service doesn't exist)
-      - name: Deploy backend to ECS
-        continue-on-error: true
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.render-backend-task.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE_BACKEND }}
+          task-definition: ${{ steps.render-task.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
