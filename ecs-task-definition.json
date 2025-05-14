@@ -1,6 +1,6 @@
 {
   "family": "task-manager-app",
-  "networkMode": "bridge",
+  "networkMode": "awsvpc",
   "requiresCompatibilities": ["EC2"],
   "cpu": "256",
   "memory": "512",
