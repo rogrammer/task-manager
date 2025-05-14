@@ -1,6 +1,6 @@
 {
     "family": "backend",
-    "networkMode": "bridge",
+    "networkMode": "awsvpc",
     "containerDefinitions": [
       {
         "name": "backend-container",

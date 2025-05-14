@@ -1,6 +1,6 @@
 {
     "family": "frontend",
-    "networkMode": "bridge",
+    "networkMode": "awsvpc",
     "containerDefinitions": [
       {
         "name": "frontend-container",
