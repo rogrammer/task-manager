@@ -10,7 +10,7 @@ env:
   ECR_REPOSITORY_FRONTEND: frontend
   ECR_REPOSITORY_BACKEND: backend
   ECS_CLUSTER: manager-cluster
-  ECS_SERVICE: frontend-service
+  ECS_SERVICE: task-manager-service
 
 jobs:
   build-and-deploy:
