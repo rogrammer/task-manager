@@ -11,10 +11,9 @@ env:
   ECR_REPOSITORY_BACKEND: backend
   ECS_CLUSTER: manager-cluster
   ECS_SERVICE: task-manager-service
-  ECS_TASK_DEFINITION: task-manager-app
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -31,35 +30,40 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Get latest task definition
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-            --region ${{ env.AWS_REGION }} > task-definition.json
-
-      - name: Update task definition with latest images
+      # Build & push frontend image
+      - name: Build & push frontend image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          jq '.taskDefinition | .containerDefinitions[0].image = "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_FRONTEND }}:latest" | .containerDefinitions[1].image = "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_BACKEND }}:latest" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' task-definition.json > updated-task-definition.json
+          cd frontend
+          docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:$IMAGE_TAG $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:latest
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_FRONTEND }}:latest
 
-      - name: Register new task definition
+      # Build & push backend image
+      - name: Build & push backend image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          aws ecs register-task-definition \
-            --cli-input-json file://updated-task-definition.json \
-            --region ${{ env.AWS_REGION }} > register-task-output.json
-          TASK_REVISION=$(jq -r '.taskDefinition.revision' register-task-output.json)
-          echo "TASK_REVISION=$TASK_REVISION" >> $GITHUB_ENV
+          cd backend
+          docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:$IMAGE_TAG $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:latest
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_BACKEND }}:latest
 
+      # Update frontend service
       - name: Update ECS service
         run: |
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE }} \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }}:${{ env.TASK_REVISION }} \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
 
+      # Wait for service stability
       - name: Wait for service stability
         run: |
           aws ecs wait services-stable \
