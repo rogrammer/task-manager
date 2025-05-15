@@ -5,7 +5,8 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
 
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL =
+    process.env.REACT_APP_API_URL || "http://172.17.0.2:5000/api/tasks";
 
   const fetchTasks = useCallback(async () => {
     try {

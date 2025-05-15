@@ -14,6 +14,7 @@ const corsOptions = {
     "http://localhost:3000",
     "http://localhost:3001",
     "http://frontend:3000",
+    "http://16.171.67.241:3000",
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
@@ -56,7 +57,7 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
 });
 
