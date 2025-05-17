@@ -19,6 +19,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Matches typical backend/frontend runtime
+
+      - name: Install backend dependencies and run tests
+        run: |
+          cd backend
+          npm install
+          npm test
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:

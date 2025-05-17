@@ -1,66 +1,71 @@
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
-const taskRoutes = require("./routes/tasks");
-
-// Load environment variables
-dotenv.config();
+require("dotenv").config();
 
 const app = express();
-
-// Configure CORS
-const corsOptions = {
-  origin: ["http://localhost:3000", "http://13.61.184.57:3000"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type"],
-};
-app.use(cors(corsOptions));
-
-// Log incoming requests for debugging
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url} from ${req.headers.origin}`);
-  next();
-});
+const port = process.env.PORT || 5000;
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/api/tasks", taskRoutes);
+// Mock data
+let tasks = [
+  {
+    id: 1,
+    title: "Sample Task",
+    description: "This is a sample task",
+    dueDate: "2025-05-20",
+    priority: "Medium",
+    status: "To Do",
+  },
+];
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK" });
+// Mock API endpoints
+app.get("/api/tasks", (req, res) => {
+  res.json(tasks);
 });
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
+app.post("/api/tasks", (req, res) => {
+  const task = { ...req.body, id: Date.now() };
+  tasks.push(task);
+  res.json(task);
 });
 
-// Handle uncaught exceptions
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err.stack);
-  process.exit(1);
+app.put("/api/tasks/:id", (req, res) => {
+  const { id } = req.params;
+  tasks = tasks.map((task) =>
+    task.id === parseInt(id) ? { ...req.body, id: parseInt(id) } : task
+  );
+  res.json(tasks.find((task) => task.id === parseInt(id)));
 });
 
-// Handle unhandled promise rejections
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
-  process.exit(1);
+app.delete("/api/tasks/:id", (req, res) => {
+  const { id } = req.params;
+  tasks = tasks.filter((task) => task.id !== parseInt(id));
+  res.json({ message: "Task deleted" });
 });
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+// Mock login endpoint
+app.post("/api/login", (req, res) => {
+  const { email, password } = req.body;
+  if (email && password) {
+    res.json({ email, message: "Login successful" });
+  } else {
+    res.status(400).json({ message: "Invalid credentials" });
+  }
 });
 
-// Ensure server closes gracefully
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received. Closing server...");
-  server.close(() => {
-    console.log("Server closed.");
-    process.exit(0);
-  });
+// Mock register endpoint
+app.post("/api/register", (req, res) => {
+  const { email, password } = req.body;
+  if (email && password) {
+    res.json({ email, message: "Registration successful" });
+  } else {
+    res.status(400).json({ message: "Invalid input" });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
