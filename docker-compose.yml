@@ -23,7 +23,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://backend:5000/api/tasks
+      - REACT_APP_API_URL=http://backend:5000/api/
     depends_on:
       backend:
         condition: service_healthy
